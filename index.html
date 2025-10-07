@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>English Tutor Avatar</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.8;
+        }
+        
+        .voice-controls {
+            padding: 15px 20px;
+            background: #e8f4f8;
+            border-bottom: 1px solid #bdc3c7;
+            text-align: center;
+        }
+        
+        .voice-controls button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .voice-controls button:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+        
+        .voice-controls button:active {
+            transform: translateY(1px);
+        }
+        
+        .voice-controls button.listening {
+            background: #e74c3c;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .avatar-section {
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        
+        #avatar-container {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            background: #ecf0f1;
+            border-radius: 10px;
+            border: 3px solid #bdc3c7;
+        }
+        
+        .dialogue-section {
+            padding: 20px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        .avatar-message {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+        
+        .avatar-message::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: #3498db transparent;
+        }
+        
+        .input-section {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        #user-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        #user-input:focus {
+            border-color: #3498db;
+        }
+        
+        #send-btn, #speak-btn {
+            padding: 12px 24px;
+            background: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        
+        #send-btn:hover, #speak-btn:hover {
+            background: #27ae60;
+        }
+        
+        #send-btn:disabled, #speak-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .input-mode {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .mode-btn {
+            padding: 8px 16px;
+            border: 2px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .mode-btn.active {
+            background: #3498db;
+            color: white;
+        }
+        
+        .instructions {
+            padding: 15px 20px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            margin: 10px 20px;
+            border-radius: 4px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 10px;
+            color: #7f8c8d;
+        }
+        
+        .speech-result {
+            padding: 10px;
+            margin: 10px 0;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇬🇧 English Conversation Tutor</h1>
+            <p>Practice English with our friendly avatar!</p>
+        </div>
+        
+        <div class="voice-controls">
+            <label style="font-size: 14px;">
+                <strong>Voice Settings:</strong> 
+                <button type="button" id="test-voice-btn">Test Voice</button>
+                <button type="button" id="stop-voice-btn">Stop Speaking</button>
+                <span id="voice-status" style="margin-left: 10px; font-size: 12px; color: #666;">Ready</span>
+            </label>
+        </div>
+        
+       <div class="instructions">
+    <strong>💡 How to use:</strong> The avatar will ask about your life, hobbies, and interests! 
+    You can talk about your name, age, country, job, hobbies, food, family, travel, and more!
+    </div>
+        
+        <div class="avatar-section">
+            <div id="avatar-container"></div>
+        </div>
+        
+        <div class="dialogue-section">
+            <div class="avatar-message">
+                <span id="avatar-text">Hello! What's your name?</span>
+            </div>
+        </div>
+        
+        <div class="speech-result" id="speech-result">
+            <strong>You said:</strong> <span id="recognized-text"></span>
+        </div>
+        
+        <div class="loading" id="loading-indicator">
+            ⏳ Avatar is thinking...
+        </div>
+        
+        <div class="input-section">
+            <div class="input-mode">
+                <button class="mode-btn active" id="type-mode-btn">✏️ Type Response</button>
+                <button class="mode-btn" id="speak-mode-btn">🎤 Speak Response</button>
+            </div>
+            
+            <div class="input-group" id="type-input-group">
+                <input type="text" id="user-input" placeholder="Type your response in English..." autocomplete="off">
+                <button id="send-btn">Send</button>
+            </div>
+            
+            <div class="input-group" id="speak-input-group" style="display: none;">
+                <button id="speak-btn" style="width: 100%;">🎤 Click to Speak</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Three.js Avatar Setup
+        let scene, camera, renderer, avatar;
+        let isSpeaking = false;
+        let currentStep = 1;
+        let conversationState = 'asking_name';
+        let speechSynthesis = window.speechSynthesis;
+        let recognition = null;
+        let isListening = false;
+        let currentInputMode = 'type'; // 'type' or 'speak'
+
+        // Initialize Speech Recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    console.log("Speech recognition started");
+                    isListening = true;
+                    document.getElementById('speak-btn').classList.add('listening');
+                    document.getElementById('speak-btn').textContent = "🎤 Listening...";
+                    document.getElementById('voice-status').textContent = "Listening...";
+                };
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    console.log("Recognized speech:", transcript);
+                    
+                    // Show recognized text
+                    document.getElementById('recognized-text').textContent = transcript;
+                    document.getElementById('speech-result').style.display = 'block';
+                    
+                    // Process the speech
+                    processUserResponse(transcript);
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error("Speech recognition error:", event.error);
+                    document.getElementById('speak-btn').classList.remove('listening');
+                    document.getElementById('speak-btn').textContent = "🎤 Click to Speak";
+                    document.getElementById('voice-status').textContent = "Recognition error";
+                    isListening = false;
+                    
+                    if (event.error === 'not-allowed') {
+                        alert('Microphone access denied. Please allow microphone permissions.');
+                    }
+                };
+                
+                recognition.onend = function() {
+                    console.log("Speech recognition ended");
+                    document.getElementById('speak-btn').classList.remove('listening');
+                    document.getElementById('speak-btn').textContent = "🎤 Click to Speak";
+                    document.getElementById('voice-status').textContent = "Ready";
+                    isListening = false;
+                };
+                
+            } else {
+                console.log("Speech recognition not supported");
+                document.getElementById('speak-mode-btn').disabled = true;
+                document.getElementById('speak-mode-btn').textContent = "🎤 Not Supported";
+            }
+        }
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xecf0f1);
+            
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            camera.position.z = 5;
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(300, 300);
+            document.getElementById('avatar-container').appendChild(renderer.domElement);
+            
+            createAvatar();
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            animate();
+        }
+
+        function createAvatar() {
+            const headGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const headMaterial = new THREE.MeshPhongMaterial({ color: 0x3498db });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            scene.add(head);
+
+            const bodyGeometry = new THREE.CylinderGeometry(0.8, 0.6, 1.5, 32);
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0x2c3e50 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = -1.2;
+            scene.add(body);
+
+            // Add mouth for speaking animation
+            const mouthGeometry = new THREE.TorusGeometry(0.3, 0.05, 16, 32);
+            const mouthMaterial = new THREE.MeshPhongMaterial({ color: 0xe74c3c });
+            const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+            mouth.position.set(0, -0.2, 0.8);
+            mouth.rotation.x = Math.PI / 2;
+            head.add(mouth);
+
+            avatar = head;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (avatar) {
+                avatar.rotation.y += 0.01;
+                if (isSpeaking) {
+                    // Enhanced speaking animation - mouth movement
+                    avatar.scale.y = 1 + Math.sin(Date.now() * 0.03) * 0.1;
+                    avatar.scale.x = 1 + Math.cos(Date.now() * 0.025) * 0.05;
+                    
+                    // Head bob while speaking
+                    avatar.position.y = Math.sin(Date.now() * 0.02) * 0.1;
+                } else {
+                    avatar.scale.y = 1;
+                    avatar.scale.x = 1;
+                    avatar.position.y = 0;
+                }
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // Text-to-Speech Function
+        function speakText(text) {
+            return new Promise((resolve) => {
+                if (!speechSynthesis) {
+                    console.log("Speech synthesis not supported");
+                    document.getElementById('voice-status').textContent = "Voice not supported";
+                    resolve();
+                    return;
+                }
+                
+                // Cancel any ongoing speech
+                speechSynthesis.cancel();
+                
+                // Create speech utterance
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Configure voice settings for language learning
+                utterance.rate = 0.9; // Slightly slower for comprehension
+                utterance.pitch = 1.0;
+                utterance.volume = 1.0;
+                
+                // Try to set English voice
+                const voices = speechSynthesis.getVoices();
+                const englishVoice = voices.find(voice => 
+                    voice.lang.includes('en') && voice.name.includes('female')
+                );
+                
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                    document.getElementById('voice-status').textContent = "English voice active";
+                } else {
+                    document.getElementById('voice-status').textContent = "Default voice";
+                }
+                
+                // Event handlers
+                utterance.onstart = () => {
+                    console.log("Started speaking:", text);
+                    isSpeaking = true;
+                    document.getElementById('voice-status').textContent = "Speaking...";
+                };
+                
+                utterance.onend = () => {
+                    console.log("Finished speaking");
+                    isSpeaking = false;
+                    document.getElementById('voice-status').textContent = "Ready";
+                    resolve();
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error("Speech error:", event);
+                    isSpeaking = false;
+                    document.getElementById('voice-status').textContent = "Voice error";
+                    resolve();
+                };
+                
+                // Start speaking
+                speechSynthesis.speak(utterance);
+            });
+        }
+
+        // Enhanced display function with TTS
+        async function displayAvatarMessage(message) {
+            // Update text immediately
+            document.getElementById('avatar-text').textContent = message;
+            
+            // Speak the message
+            await speakText(message);
+        }
+
+        async function startConversation() {
+            try {
+                const response = await fetch('/api/conversation/start/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const data = await response.json();
+                currentStep = data.step_id;
+                conversationState = data.conversation_state;
+                await displayAvatarMessage(data.avatar_message);
+                
+            } catch (error) {
+                console.error('Error starting conversation:', error);
+                await displayAvatarMessage("Hello! What's your name?");
+            }
+        }
+        // Track conversation data
+let userData = {};
+
+async function processUserResponse(userInput) {
+    if (!userInput.trim()) return;
+
+    showLoading(true);
+
+    try {
+        const response = await fetch('/api/conversation/respond/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: userInput,
+                current_step: currentStep,
+                conversation_state: conversationState,
+                user_data: userData  // Send user data to backend
+            })
+        });
+        
+        const data = await response.json();
+        currentStep = data.step_id;
+        conversationState = data.conversation_state;
+        userData = data.user_data || {};  // Update user data
+        
+        await displayAvatarMessage(data.avatar_message);
+        
+    } catch (error) {
+        console.error('Error processing response:', error);
+        await displayAvatarMessage("I didn't understand that. Could you please try again?");
+    } finally {
+        showLoading(false);
+        document.getElementById('user-input').value = '';
+        document.getElementById('speech-result').style.display = 'none';
+        
+        if (currentInputMode === 'type') {
+            document.getElementById('user-input').focus();
+        }
+    }
+}
+        async function processUserResponse(userInput) {
+            if (!userInput.trim()) return;
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/conversation/respond/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: userInput,
+                        current_step: currentStep,
+                        conversation_state: conversationState
+                    })
+                });
+                
+                const data = await response.json();
+                currentStep = data.step_id;
+                conversationState = data.conversation_state;
+                await displayAvatarMessage(data.avatar_message);
+                
+            } catch (error) {
+                console.error('Error processing response:', error);
+                await displayAvatarMessage("I didn't understand that. Could you please try again?");
+            } finally {
+                showLoading(false);
+                document.getElementById('user-input').value = '';
+                document.getElementById('user-input').focus();
+            }
+        }
+
+        function handleTypedResponse() {
+            const userInput = document.getElementById('user-input').value.trim();
+            if (userInput) {
+                processUserResponse(userInput);
+            }
+        }
+
+        function startSpeechRecognition() {
+            if (recognition && !isListening) {
+                recognition.start();
+            }
+        }
+
+        function switchInputMode(mode) {
+            currentInputMode = mode;
+            
+            // Update button states
+            document.getElementById('type-mode-btn').classList.toggle('active', mode === 'type');
+            document.getElementById('speak-mode-btn').classList.toggle('active', mode === 'speak');
+            
+            // Show/hide input groups
+            document.getElementById('type-input-group').style.display = mode === 'type' ? 'flex' : 'none';
+            document.getElementById('speak-input-group').style.display = mode === 'speak' ? 'flex' : 'none';
+            
+            // Update instructions
+            document.querySelector('.instructions strong').textContent = 
+                mode === 'type' ? "💡 Type your response:" : "💡 Click the microphone to speak:";
+        }
+
+        function showLoading(isLoading) {
+            const input = document.getElementById('user-input');
+            const button = document.getElementById('send-btn');
+            const speakButton = document.getElementById('speak-btn');
+            const loading = document.getElementById('loading-indicator');
+            
+            if (isLoading) {
+                input.disabled = true;
+                button.disabled = true;
+                speakButton.disabled = true;
+                loading.style.display = 'block';
+            } else {
+                input.disabled = false;
+                button.disabled = false;
+                speakButton.disabled = false;
+                loading.style.display = 'none';
+                
+                if (currentInputMode === 'type') {
+                    input.focus();
+                }
+            }
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Voice controls
+            document.getElementById('test-voice-btn').addEventListener('click', () => {
+                speakText("Hello! I am your English tutor. Ready to practice?");
+            });
+            
+            document.getElementById('stop-voice-btn').addEventListener('click', () => {
+                if (speechSynthesis) {
+                    speechSynthesis.cancel();
+                    isSpeaking = false;
+                    document.getElementById('voice-status').textContent = "Stopped";
+                }
+            });
+            
+            // Input mode switching
+            document.getElementById('type-mode-btn').addEventListener('click', () => {
+                switchInputMode('type');
+            });
+            
+            document.getElementById('speak-mode-btn').addEventListener('click', () => {
+                switchInputMode('speak');
+            });
+            
+            // Typing input
+            document.getElementById('send-btn').addEventListener('click', handleTypedResponse);
+            document.getElementById('user-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleTypedResponse();
+            });
+            
+            // Speech input
+            document.getElementById('speak-btn').addEventListener('click', startSpeechRecognition);
+        }
+
+        // Initialize when page loads
+        window.onload = async function() {
+            initThreeJS();
+            initSpeechRecognition();
+            setupEventListeners();
+            
+            // Wait for voices to load
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = () => {
+                    startConversation();
+                };
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                startConversation();
+            }
+        };
+    </script>
+</body>
+</html>
